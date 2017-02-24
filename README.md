@@ -1,10 +1,10 @@
-# I hope...
+# I hope ...
 
 ![](Hope1.gif)
 
 A digital poem about empathy, relationships, and lost understandings.
 
-[View in Browser](index.html)
+[View in Browser](https://willy-vvu.github.io/Hope)
 
 ![](Hope2.gif)
 
