@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+  <head>
+    <title>I hope ... by William Wu</title>
+    <style>
+      @font-face{
+        font-family: NotoMono;
+        src: url("NotoMono-Regular.ttf");
+      }
+      div {
+        font-family: NotoMono, monospace;
+        font-size: 40px;
+        display: flex;
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        /*line-height: 0;*/ /* Hack for preventing vertical wiggle */
+        /*background-color: black;*/
+      }
+      span {
+        width: 24px;
+      }
+      body{
+        background-color: black;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="elm.js"></script>
+    <script>
+      Elm.Main.fullscreen();
+    </script>
+    <!-- Uncompiled source code can be found here:
+         web.mit.edu/willywu/www/21W.764-Project0.5/Project 0.5.elm
+    -->
+  </body>
+</html>
