@@ -18,7 +18,7 @@ giMode charset =
   arrayGetCyclic charset ' ' >> Char.toCode
 
 gsAll gFunc =
-  String.map (Char.toCode >> gFunc >> Char.fromCode)
+  String.map (\n -> if n == ' ' then ' ' else (Char.toCode >> gFunc >> Char.fromCode) n)
 
 gsEnd gFunc index text =
   (String.left index text) ++ ((String.dropLeft index text) |> gsAll gFunc)
@@ -37,7 +37,7 @@ randFunc num =
   Random.step (Random.float 0 1) (Random.initialSeed num) |> first
 
 shuffle list seed =
-  List.map2 (\index item -> (item, randFunc (index + seed))) (List.range 0 ((List.length list) - 1)) list
+  List.map2 (\index item -> (item, randFunc (11*index + 34*seed))) (List.range 0 ((List.length list) - 1)) list
   |> List.sortBy second |> map first
 
 phrases = [
@@ -128,15 +128,17 @@ phrases = [
   "I'll come to call this home"
   ]
 
+maxPhraseLength = Maybe.withDefault 0 <| List.maximum <| map String.length phrases
+
 main =
   Html.program
     { init = init, view = view, update = update, subscriptions = subscriptions}
 
-type alias Model = { currentTime : Time.Time, startTime : Time.Time, shuffledPhrases : Array.Array String}
+type alias Model = { currentTime : Time.Time, startTime : Time.Time}
 
 init : (Model, Cmd Msg)
 init =
-  ({ currentTime = 0, startTime = 0, shuffledPhrases = Array.empty}, Cmd.none)
+  ({ currentTime = 0, startTime = 0}, Cmd.none)
 
 type Msg
   = Tick Time
@@ -147,33 +149,33 @@ update msg model =
     Tick newTime ->
       ({
         currentTime = newTime,
-        startTime = if model.startTime == 0 then newTime else model.startTime,
-        shuffledPhrases = if Array.isEmpty model.shuffledPhrases then shuffle phrases (Time.inMilliseconds newTime |> round) |> Array.fromList else model.shuffledPhrases
+        startTime = if model.startTime == 0 then newTime else model.startTime
       }, Cmd.none)
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
   Time.every (Time.second / 60) Tick
 
-totalCycleTime = 5000
+totalCycleTime = 40000
 glitchClockTime = 75
 phraseLengthTransition = 1000 / totalCycleTime
 
 view : Model -> Html Msg
 view model =
+  (shuffle (List.range 0 15) 100) |> map (\index -> (toFloat index) + randFunc (11 * index + 32))|> map (oneofmany model) |> Html.div []
+
+oneofmany : Model -> Float -> Html Msg
+oneofmany model offset =
   let
-    relativeTime = Time.inMilliseconds (model.currentTime - model.startTime)
+    relativeTime = (-offset * totalCycleTime / 16) + (Time.inMilliseconds (model.currentTime - model.startTime))
     indexCont = relativeTime / totalCycleTime
     index = floor (indexCont)
     anim = indexCont - toFloat index
-    glitchClock = floor <| relativeTime / glitchClockTime
+    glitchClock = floor <| relativeTime / glitchClockTime + (10 * offset)
 
-    currentPhrase = if relativeTime < totalCycleTime then phraseFirst else arrayGetCyclic model.shuffledPhrases "" index
-    currentCutoff = floor <| toFloat (String.length currentPhrase)
-                  * (min (anim / phraseLengthTransition) 1)
-                  * (min ((1 - anim) / phraseLengthTransition) 1)
+    currentPhrase = if relativeTime < 0 then "" else if relativeTime < totalCycleTime && offset < 4 then prefix ++ phraseFirst else prefix ++ arrayGetCyclic (Array.fromList <| shuffle phrases (round (273*offset))) "" index
 
-    totalPhrase = String.left currentCutoff currentPhrase
+    totalPhrase = currentPhrase ++ (String.repeat (maxPhraseLength - String.length currentPhrase) " ")
 
     glitchBox = gsAll (giMode (if (randFunc glitchClock) > 0.1 then originalGlitch else boxGlitch)) totalPhrase
     glitchBit = gsAll (giBit
@@ -182,13 +184,14 @@ view model =
                       )) totalPhrase
 
     glitchMask = List.range 1 (String.length totalPhrase) |> List.map (\index ->
-      (5 * (0.5 - randFunc(1000000*index + glitchClock)
-       + 3 * (0.5 - randFunc(1000000*index + glitchClock // 4)))) / (1 + 20 * anim) |> round)
+      ((5 * (0.5 - randFunc(1000000*index + glitchClock)
+       + 3 * (0.5 - randFunc(1000000*index + glitchClock // 4))))) * (1/(1 + 200 * anim)) - (max 0 <| -20 + 100 * (abs (anim - 1.0/4.0))) |> round)
 
-    glitchPhrase = prefix ++ String.fromList (List.map4 (\original glitch1 glitch2 mask ->
+    glitchPhrase = String.fromList (List.map4 (\original glitch1 glitch2 mask ->
+                           if (abs mask) > 2 then ' ' else
                            if mask > 0 then glitch1 else
                            if mask < 0 then glitch2 else original
                            ) (String.toList totalPhrase) (String.toList glitchBox) (String.toList glitchBit) glitchMask)
   in
-    Html.div [] (map (\letter -> Html.span [] [Html.text <| String.fromChar <|
-      (if letter == ' ' then Char.fromCode(160) else letter)]) (String.toList <|glitchPhrase))
+    Html.div [Html.Attributes.class "item"] [Html.div [Html.Attributes.class "inner"] (map (\letter -> Html.span [] [Html.text <| String.fromChar <|
+      (if letter == ' ' then Char.fromCode(160) else letter)]) (String.toList <|glitchPhrase))]

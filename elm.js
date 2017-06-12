@@ -1,5 +1,3 @@
-// Uncompiled source code can be found here:
-// web.mit.edu/willywu/www/21W.764-Project0.5/Project 0.5.elm
 
 (function() {
 'use strict';
@@ -8939,11 +8937,24 @@ var _elm_lang$html$Html_Attributes$classList = function (list) {
 var _elm_lang$html$Html_Attributes$style = _elm_lang$virtual_dom$VirtualDom$style;
 
 var _user$project$Main$glitchClockTime = 75;
-var _user$project$Main$totalCycleTime = 5000;
+var _user$project$Main$totalCycleTime = 40000;
 var _user$project$Main$phraseLengthTransition = 1000 / _user$project$Main$totalCycleTime;
+var _user$project$Main$update = F2(
+	function (msg, model) {
+		var _p0 = msg;
+		var _p1 = _p0._0;
+		return {
+			ctor: '_Tuple2',
+			_0: {
+				currentTime: _p1,
+				startTime: _elm_lang$core$Native_Utils.eq(model.startTime, 0) ? _p1 : model.startTime
+			},
+			_1: _elm_lang$core$Platform_Cmd$none
+		};
+	});
 var _user$project$Main$init = {
 	ctor: '_Tuple2',
-	_0: {currentTime: 0, startTime: 0, shuffledPhrases: _elm_lang$core$Array$empty},
+	_0: {currentTime: 0, startTime: 0},
 	_1: _elm_lang$core$Platform_Cmd$none
 };
 var _user$project$Main$phrases = {
@@ -9287,6 +9298,11 @@ var _user$project$Main$phrases = {
 		}
 	}
 };
+var _user$project$Main$maxPhraseLength = A2(
+	_elm_lang$core$Maybe$withDefault,
+	0,
+	_elm_lang$core$List$maximum(
+		A2(_elm_lang$core$List$map, _elm_lang$core$String$length, _user$project$Main$phrases)));
 var _user$project$Main$randFunc = function (num) {
 	return _elm_lang$core$Tuple$first(
 		A2(
@@ -9309,7 +9325,7 @@ var _user$project$Main$shuffle = F2(
 							return {
 								ctor: '_Tuple2',
 								_0: item,
-								_1: _user$project$Main$randFunc(index + seed)
+								_1: _user$project$Main$randFunc((11 * index) + (34 * seed))
 							};
 						}),
 					A2(
@@ -9317,25 +9333,6 @@ var _user$project$Main$shuffle = F2(
 						0,
 						_elm_lang$core$List$length(list) - 1),
 					list)));
-	});
-var _user$project$Main$update = F2(
-	function (msg, model) {
-		var _p0 = msg;
-		var _p1 = _p0._0;
-		return {
-			ctor: '_Tuple2',
-			_0: {
-				currentTime: _p1,
-				startTime: _elm_lang$core$Native_Utils.eq(model.startTime, 0) ? _p1 : model.startTime,
-				shuffledPhrases: _elm_lang$core$Array$isEmpty(model.shuffledPhrases) ? _elm_lang$core$Array$fromList(
-					A2(
-						_user$project$Main$shuffle,
-						_user$project$Main$phrases,
-						_elm_lang$core$Basics$round(
-							_elm_lang$core$Time$inMilliseconds(_p1)))) : model.shuffledPhrases
-			},
-			_1: _elm_lang$core$Platform_Cmd$none
-		};
 	});
 var _user$project$Main$phraseFirst = '...';
 var _user$project$Main$prefix = 'I hope ';
@@ -9963,10 +9960,14 @@ var _user$project$Main$originalGlitch = _elm_lang$core$Array$fromList(
 		}));
 var _user$project$Main$gsAll = function (gFunc) {
 	return _elm_lang$core$String$map(
-		function (_p2) {
-			return _elm_lang$core$Char$fromCode(
-				gFunc(
-					_elm_lang$core$Char$toCode(_p2)));
+		function (n) {
+			return _elm_lang$core$Native_Utils.eq(
+				n,
+				_elm_lang$core$Native_Utils.chr(' ')) ? _elm_lang$core$Native_Utils.chr(' ') : function (_p2) {
+				return _elm_lang$core$Char$fromCode(
+					gFunc(
+						_elm_lang$core$Char$toCode(_p2)));
+			}(n);
 		});
 };
 var _user$project$Main$gsEnd = F3(
@@ -10009,80 +10010,129 @@ var _user$project$Main$giBit = function (amount) {
 		})(
 		Math.pow(2, amount));
 };
-var _user$project$Main$view = function (model) {
-	var relativeTime = _elm_lang$core$Time$inMilliseconds(model.currentTime - model.startTime);
-	var indexCont = relativeTime / _user$project$Main$totalCycleTime;
-	var index = _elm_lang$core$Basics$floor(indexCont);
-	var anim = indexCont - _elm_lang$core$Basics$toFloat(index);
-	var glitchClock = _elm_lang$core$Basics$floor(relativeTime / _user$project$Main$glitchClockTime);
-	var currentPhrase = (_elm_lang$core$Native_Utils.cmp(relativeTime, _user$project$Main$totalCycleTime) < 0) ? _user$project$Main$phraseFirst : A3(_user$project$Main$arrayGetCyclic, model.shuffledPhrases, '', index);
-	var currentCutoff = _elm_lang$core$Basics$floor(
-		(_elm_lang$core$Basics$toFloat(
-			_elm_lang$core$String$length(currentPhrase)) * A2(_elm_lang$core$Basics$min, anim / _user$project$Main$phraseLengthTransition, 1)) * A2(_elm_lang$core$Basics$min, (1 - anim) / _user$project$Main$phraseLengthTransition, 1));
-	var totalPhrase = A2(_elm_lang$core$String$left, currentCutoff, currentPhrase);
-	var glitchBox = A2(
-		_user$project$Main$gsAll,
-		_user$project$Main$giMode(
-			(_elm_lang$core$Native_Utils.cmp(
-				_user$project$Main$randFunc(glitchClock),
-				0.1) > 0) ? _user$project$Main$originalGlitch : _user$project$Main$boxGlitch),
-		totalPhrase);
-	var glitchBit = A2(
-		_user$project$Main$gsAll,
-		_user$project$Main$giBit(
-			(_elm_lang$core$Basics$round(
-				13 * _user$project$Main$randFunc((glitchClock / 10) | 0)) - 2) + ((_elm_lang$core$Native_Utils.cmp(
-				_user$project$Main$randFunc(glitchClock),
-				0.2) > 0) ? 1 : 0)),
-		totalPhrase);
-	var glitchMask = A2(
-		_elm_lang$core$List$map,
-		function (index) {
-			return _elm_lang$core$Basics$round(
-				(5 * ((0.5 - _user$project$Main$randFunc((1000000 * index) + glitchClock)) + (3 * (0.5 - _user$project$Main$randFunc((1000000 * index) + ((glitchClock / 4) | 0)))))) / (1 + (20 * anim)));
-		},
-		A2(
-			_elm_lang$core$List$range,
-			1,
-			_elm_lang$core$String$length(totalPhrase)));
-	var glitchPhrase = A2(
-		_elm_lang$core$Basics_ops['++'],
-		_user$project$Main$prefix,
-		_elm_lang$core$String$fromList(
+var _user$project$Main$oneofmany = F2(
+	function (model, offset) {
+		var relativeTime = (((0 - offset) * _user$project$Main$totalCycleTime) / 16) + _elm_lang$core$Time$inMilliseconds(model.currentTime - model.startTime);
+		var indexCont = relativeTime / _user$project$Main$totalCycleTime;
+		var index = _elm_lang$core$Basics$floor(indexCont);
+		var anim = indexCont - _elm_lang$core$Basics$toFloat(index);
+		var glitchClock = _elm_lang$core$Basics$floor((relativeTime / _user$project$Main$glitchClockTime) + (10 * offset));
+		var currentPhrase = (_elm_lang$core$Native_Utils.cmp(relativeTime, 0) < 0) ? '' : (((_elm_lang$core$Native_Utils.cmp(relativeTime, _user$project$Main$totalCycleTime) < 0) && (_elm_lang$core$Native_Utils.cmp(offset, 4) < 0)) ? A2(_elm_lang$core$Basics_ops['++'], _user$project$Main$prefix, _user$project$Main$phraseFirst) : A2(
+			_elm_lang$core$Basics_ops['++'],
+			_user$project$Main$prefix,
+			A3(
+				_user$project$Main$arrayGetCyclic,
+				_elm_lang$core$Array$fromList(
+					A2(
+						_user$project$Main$shuffle,
+						_user$project$Main$phrases,
+						_elm_lang$core$Basics$round(273 * offset))),
+				'',
+				index)));
+		var totalPhrase = A2(
+			_elm_lang$core$Basics_ops['++'],
+			currentPhrase,
+			A2(
+				_elm_lang$core$String$repeat,
+				_user$project$Main$maxPhraseLength - _elm_lang$core$String$length(currentPhrase),
+				' '));
+		var glitchBox = A2(
+			_user$project$Main$gsAll,
+			_user$project$Main$giMode(
+				(_elm_lang$core$Native_Utils.cmp(
+					_user$project$Main$randFunc(glitchClock),
+					0.1) > 0) ? _user$project$Main$originalGlitch : _user$project$Main$boxGlitch),
+			totalPhrase);
+		var glitchBit = A2(
+			_user$project$Main$gsAll,
+			_user$project$Main$giBit(
+				(_elm_lang$core$Basics$round(
+					13 * _user$project$Main$randFunc((glitchClock / 10) | 0)) - 2) + ((_elm_lang$core$Native_Utils.cmp(
+					_user$project$Main$randFunc(glitchClock),
+					0.2) > 0) ? 1 : 0)),
+			totalPhrase);
+		var glitchMask = A2(
+			_elm_lang$core$List$map,
+			function (index) {
+				return _elm_lang$core$Basics$round(
+					((5 * ((0.5 - _user$project$Main$randFunc((1000000 * index) + glitchClock)) + (3 * (0.5 - _user$project$Main$randFunc((1000000 * index) + ((glitchClock / 4) | 0)))))) * (1 / (1 + (200 * anim)))) - A2(
+						_elm_lang$core$Basics$max,
+						0,
+						-20 + (100 * _elm_lang$core$Basics$abs(anim - (1.0 / 4.0)))));
+			},
+			A2(
+				_elm_lang$core$List$range,
+				1,
+				_elm_lang$core$String$length(totalPhrase)));
+		var glitchPhrase = _elm_lang$core$String$fromList(
 			A5(
 				_elm_lang$core$List$map4,
 				F4(
 					function (original, glitch1, glitch2, mask) {
-						return (_elm_lang$core$Native_Utils.cmp(mask, 0) > 0) ? glitch1 : ((_elm_lang$core$Native_Utils.cmp(mask, 0) < 0) ? glitch2 : original);
+						return (_elm_lang$core$Native_Utils.cmp(
+							_elm_lang$core$Basics$abs(mask),
+							2) > 0) ? _elm_lang$core$Native_Utils.chr(' ') : ((_elm_lang$core$Native_Utils.cmp(mask, 0) > 0) ? glitch1 : ((_elm_lang$core$Native_Utils.cmp(mask, 0) < 0) ? glitch2 : original));
 					}),
 				_elm_lang$core$String$toList(totalPhrase),
 				_elm_lang$core$String$toList(glitchBox),
 				_elm_lang$core$String$toList(glitchBit),
-				glitchMask)));
+				glitchMask));
+		return A2(
+			_elm_lang$html$Html$div,
+			{
+				ctor: '::',
+				_0: _elm_lang$html$Html_Attributes$class('item'),
+				_1: {ctor: '[]'}
+			},
+			{
+				ctor: '::',
+				_0: A2(
+					_elm_lang$html$Html$div,
+					{
+						ctor: '::',
+						_0: _elm_lang$html$Html_Attributes$class('inner'),
+						_1: {ctor: '[]'}
+					},
+					A2(
+						_elm_lang$core$List$map,
+						function (letter) {
+							return A2(
+								_elm_lang$html$Html$span,
+								{ctor: '[]'},
+								{
+									ctor: '::',
+									_0: _elm_lang$html$Html$text(
+										_elm_lang$core$String$fromChar(
+											_elm_lang$core$Native_Utils.eq(
+												letter,
+												_elm_lang$core$Native_Utils.chr(' ')) ? _elm_lang$core$Char$fromCode(160) : letter)),
+									_1: {ctor: '[]'}
+								});
+						},
+						_elm_lang$core$String$toList(glitchPhrase))),
+				_1: {ctor: '[]'}
+			});
+	});
+var _user$project$Main$view = function (model) {
 	return A2(
 		_elm_lang$html$Html$div,
 		{ctor: '[]'},
 		A2(
 			_elm_lang$core$List$map,
-			function (letter) {
-				return A2(
-					_elm_lang$html$Html$span,
-					{ctor: '[]'},
-					{
-						ctor: '::',
-						_0: _elm_lang$html$Html$text(
-							_elm_lang$core$String$fromChar(
-								_elm_lang$core$Native_Utils.eq(
-									letter,
-									_elm_lang$core$Native_Utils.chr(' ')) ? _elm_lang$core$Char$fromCode(160) : letter)),
-						_1: {ctor: '[]'}
-					});
-			},
-			_elm_lang$core$String$toList(glitchPhrase)));
+			_user$project$Main$oneofmany(model),
+			A2(
+				_elm_lang$core$List$map,
+				function (index) {
+					return _elm_lang$core$Basics$toFloat(index) + _user$project$Main$randFunc((11 * index) + 32);
+				},
+				A2(
+					_user$project$Main$shuffle,
+					A2(_elm_lang$core$List$range, 0, 15),
+					100))));
 };
-var _user$project$Main$Model = F3(
-	function (a, b, c) {
-		return {currentTime: a, startTime: b, shuffledPhrases: c};
+var _user$project$Main$Model = F2(
+	function (a, b) {
+		return {currentTime: a, startTime: b};
 	});
 var _user$project$Main$Tick = function (a) {
 	return {ctor: 'Tick', _0: a};
